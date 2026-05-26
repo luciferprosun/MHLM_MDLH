@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raport Przegladowy MHLM/MDLH Ultra Master Library</title>
+<style>
+/* === RESET & BASE === */
+* { box-sizing: border-box; }
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: #333;
+    text-align: justify;
+    text-align-last: left;
+    string-set: doctitle "";
+}
+
+/* === PAGE SETUP === */
+@page {
+    size: A4;
+    margin: 2.5cm 2cm;
+    @top-center { content: string(doctitle); font-size: 9pt; color: #666; }
+    @bottom-center { content: counter(page); font-size: 9pt; color: #666; }
+}
+@page :first { margin: 0; @top-center { content: none; } @bottom-center { content: none; } }
+@page cover { @top-center { content: none; } @bottom-center { content: none; } }
+@page toc { @top-center { content: none; } @bottom-center { content: none; } }
+
+.cover { page: cover; }
+.toc-page { page: toc; }
+
+/* === COVER - SWISS STYLE === */
+.cover {
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    position: relative;
+    overflow: hidden;
+    background: #fafafa;
+    page-break-after: always;
+}
+.cover::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 8mm;
+    background: #2c3e50;
+}
+.cover::after {
+    content: "";
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 8mm;
+    background: #2c3e50;
+}
+.cover-grid {
+    position: absolute;
+    top: 8mm; left: 0;
+    width: 100%; height: calc(100% - 16mm);
+    background-image:
+        linear-gradient(to right, rgba(44,62,80,0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(44,62,80,0.05) 1px, transparent 1px);
+    background-size: 20mm 20mm;
+}
+.cover-accent {
+    position: absolute;
+    top: 25mm; left: 20mm;
+    width: 60mm; height: 3mm;
+    background: #c0392b;
+}
+.cover-accent2 {
+    position: absolute;
+    top: 32mm; left: 20mm;
+    width: 40mm; height: 1mm;
+    background: #2c3e50;
+}
+.cover-corner-tl {
+    position: absolute;
+    top: 15mm; left: 15mm;
+    width: 15mm; height: 15mm;
+    border-top: 2px solid #2c3e50;
+    border-left: 2px solid #2c3e50;
+}
+.cover-corner-br {
+    position: absolute;
+    bottom: 15mm; right: 15mm;
+    width: 15mm; height: 15mm;
+    border-bottom: 2px solid #2c3e50;
+    border-right: 2px solid #2c3e50;
+}
+.cover-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: 75%;
+    z-index: 1;
+}
+.cover-classification {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 10pt;
+    letter-spacing: 3pt;
+    text-transform: uppercase;
+    color: #c0392b;
+    margin-bottom: 2cm;
+    font-weight: 600;
+}
+.cover-title {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 26pt;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.8cm;
+    line-height: 1.2;
+}
+.cover-subtitle {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 14pt;
+    color: #555;
+    margin-bottom: 3cm;
+    font-weight: 400;
+}
+.cover-meta {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 11pt;
+    color: #333;
+    line-height: 2;
+}
+.cover-meta strong {
+    color: #2c3e50;
+}
+.cover-barcode {
+    position: absolute;
+    bottom: 25mm;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50mm;
+    height: 10mm;
+    background: repeating-linear-gradient(
+        to right,
+        #333 0px, #333 2px,
+        transparent 2px, transparent 4px,
+        #333 4px, #333 5px,
+        transparent 5px, transparent 8px,
+        #333 8px, #333 9px,
+        transparent 9px, transparent 11px,
+        #333 11px, #333 13px,
+        transparent 13px, transparent 15px
+    );
+    opacity: 0.4;
+}
+
+/* === TOC === */
+.toc-page { page-break-after: always; }
+.toc-title {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 20pt;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 1.5cm;
+    text-align: center;
+}
+.toc { list-style: none; padding: 0; margin: 0; }
+.toc li { margin: 0.4em 0; }
+.toc a {
+    text-decoration: none;
+    color: #333;
+    display: flex;
+    align-items: baseline;
+}
+.toc a::after {
+    content: leader('.') target-counter(attr(href url), page);
+    flex: 1;
+    text-align: right;
+    margin-left: 0.5em;
+}
+.toc-l1 { font-weight: 700; font-size: 11pt; margin-top: 0.8em; }
+.toc-l2 { padding-left: 1.5em; font-size: 10.5pt; }
+
+/* === HEADINGS === */
+h1 {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 20pt;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-top: 0;
+    margin-bottom: 0.8cm;
+    padding-bottom: 0.3cm;
+    border-bottom: 2px solid #2c3e50;
+    page-break-after: avoid;
+    string-set: doctitle content();
+}
+h2 {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 14pt;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-top: 1cm;
+    margin-bottom: 0.4cm;
+    page-break-after: avoid;
+}
+h3 {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 12pt;
+    font-weight: 700;
+    color: #444;
+    margin-top: 0.6cm;
+    margin-bottom: 0.3cm;
+    page-break-after: avoid;
+}
+
+/* === TABLES (Three-line) === */
+table {
+    width: 100%;
+    max-width: 100%;
+    border-collapse: collapse;
+    margin: 1em 0;
+    font-size: 10pt;
+    page-break-inside: auto;
+}
+thead { display: table-header-group; }
+thead tr {
+    border-top: 2px solid #333;
+    border-bottom: 1px solid #333;
+}
+th {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-weight: 700;
+    text-align: left;
+    padding: 0.4em 0.6em;
+    background: #f5f5f5;
+}
+td { padding: 0.35em 0.6em; }
+tbody tr { border-bottom: 0.5px solid #ddd; }
+tbody tr:last-child { border-bottom: 2px solid #333; }
+tr { page-break-inside: avoid; }
+caption {
+    font-weight: 700;
+    margin-bottom: 0.5em;
+    text-align: left;
+}
+caption::before {
+    content: attr(data-label) "  ";
+    font-weight: 700;
+}
+
+/* === FIGURES === */
+figure {
+    margin: 1em 0;
+    text-align: center;
+    page-break-inside: avoid;
+}
+figure img, figure svg {
+    max-width: 80%;
+    max-height: 40vh;
+    height: auto;
+}
+figcaption {
+    font-size: 10pt;
+    color: #555;
+    margin-top: 0.5em;
+}
+figcaption::before {
+    content: attr(data-label) "  ";
+    font-weight: 700;
+}
+
+/* === BLOCKQUOTE / CALLOUT === */
+blockquote {
+    border-left: 3px solid #2c3e50;
+    padding-left: 1em;
+    margin: 1em 0;
+    color: #555;
+    font-style: italic;
+}
+.callout {
+    border-left: 3px solid #c0392b;
+    padding: 0.8em 1em;
+    margin: 1em 0;
+    background: #fdf6f6;
+    page-break-inside: avoid;
+}
+.callout-title {
+    font-weight: 700;
+    color: #c0392b;
+    margin-bottom: 0.3em;
+}
+.callout-positive {
+    border-left-color: #27ae60;
+    background: #f6fdf8;
+}
+.callout-positive .callout-title { color: #27ae60; }
+
+/* === SCORE BOX === */
+.score-grid {
+    display: table;
+    width: 100%;
+    margin: 1em 0;
+    border: 1px solid #333;
+}
+.score-row { display: table-row; }
+.score-cell {
+    display: table-cell;
+    padding: 0.6em 1em;
+    border-right: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    width: 50%;
+}
+.score-cell:last-child { border-right: none; }
+.score-label {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 1pt;
+    color: #666;
+    margin-bottom: 0.2em;
+}
+.score-value {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 18pt;
+    font-weight: 700;
+    color: #2c3e50;
+}
+.score-desc {
+    font-size: 9pt;
+    color: #666;
+    margin-top: 0.2em;
+}
+
+/* === MISC === */
+p { margin: 0.5em 0; }
+ul, ol { margin: 0.5em 0; padding-left: 1.5em; }
+li { margin: 0.25em 0; }
+strong { color: #2c3e50; }
+a { color: #2c3e50; text-decoration: none; word-break: break-all; }
+code {
+    font-family: "Courier New", monospace;
+    font-size: 9.5pt;
+    background: #f5f5f5;
+    padding: 0.1em 0.3em;
+    word-break: break-word;
+}
+pre {
+    background: #f5f5f5;
+    padding: 0.8em;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-width: 100%;
+    font-size: 9pt;
+    border: 0.5px solid #ddd;
+}
+pre, table, figure, img, svg, blockquote {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.section { page-break-before: always; }
+.section:first-of-type { page-break-before: auto; }
+
+.katex-display { overflow-x: auto; }
+
+/* Summary box */
+.summary-box {
+    border: 1px solid #2c3e50;
+    padding: 1em;
+    margin: 1em 0;
+    background: #f8f9fa;
+    page-break-inside: avoid;
+}
+.summary-box-title {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.5em;
+    font-size: 12pt;
+}
+</style>
+</head>
+<body>
+
+<!-- ==================== COVER ==================== -->
+<div class="cover">
+    <div class="cover-grid"></div>
+    <div class="cover-accent"></div>
+    <div class="cover-accent2"></div>
+    <div class="cover-corner-tl"></div>
+    <div class="cover-corner-br"></div>
+    <div class="cover-barcode"></div>
+    <div class="cover-content">
+        <div class="cover-classification">Raport Przegladu Architektonicznego</div>
+        <h1 class="cover-title" style="border:none;color:#2c3e50;margin:0 0 0.8cm 0;padding:0;">MHLM / MDLH Ultra<br>Master Library</h1>
+        <p class="cover-subtitle">Ocena infrastruktury badawczej, ryzyka epistemologicznego<br>i gotowosci grantowej z perspektywy rady przegladowej</p>
+        <div class="cover-meta">
+            <p><strong>Typ dokumentu:</strong> Architektoniczny audyt forensic</p>
+            <p><strong>Zakres:</strong> LSC / MHLM / MDLH / AOIA</p>
+            <p><strong>Data przegladu:</strong> 26 maja 2026</p>
+            <p><strong>Metryka:</strong> 874 plikow kanonicznych, 13 535 jednostek skanowanych</p>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== TOC ==================== -->
+<div class="toc-page">
+    <div class="toc-title">Spis tresci</div>
+    <ul class="toc">
+        <li class="toc-l1"><a href="#sec1">Sekcja 1. Mocne strony architektoniczne</a></li>
+        <li class="toc-l2"><a href="#sec1-1">1.1. Rzeczywista innowacja vs inflacja terminologiczna</a></li>
+        <li class="toc-l2"><a href="#sec1-2">1.2. Odpowiedzialnosc naukowa i bezpieczenstwo AI</a></li>
+        <li class="toc-l2"><a href="#sec1-3">1.3. Architektura provenance i dlugoterminowa wartosc</a></li>
+        <li class="toc-l1"><a href="#sec2">Sekcja 2. Krytyczne slabosci</a></li>
+        <li class="toc-l2"><a href="#sec2-1">2.1. Ukryta kruchosci architektoniczna</a></li>
+        <li class="toc-l2"><a href="#sec2-2">2.2. Ryzyka zanieczyszczenia provenance i niestabilnosc epistemologiczna</a></li>
+        <li class="toc-l2"><a href="#sec2-3">2.3. Pulapki zlozonosci i niebezpieczenstwa kognicji rekursywnej</a></li>
+        <li class="toc-l1"><a href="#sec3">Sekcja 3. Analiza gotowosci grantowej</a></li>
+        <li class="toc-l2"><a href="#sec3-1">3.1. Potencjalne zrodla zainteresowania</a></li>
+        <li class="toc-l2"><a href="#sec3-2">3.2. Obecne bariery institutionalnej adopcji</a></li>
+        <li class="toc-l2"><a href="#sec3-3">3.3. Warunki niezbedne w horyzoncie 6-12 miesiecy</a></li>
+        <li class="toc-l1"><a href="#sec4">Sekcja 4. Mapa drogowa profesjonalizacji</a></li>
+        <li class="toc-l1"><a href="#sec5">Sekcja 5. Najwazniejsza decyzja architektoniczna</a></li>
+        <li class="toc-l1"><a href="#sec6">Sekcja 6. Werdykt koncowy</a></li>
+    </ul>
+</div>
+
+<!-- ==================== SEKCJA 1 ==================== -->
+<div class="section" id="sec1">
+<h1>Sekcja 1. Mocne strony architektoniczne</h1>
+
+<p>Niniejszy przeglad traktuje dostarczony zbior <strong>MHLM/MDLH Ultra Master Library</strong> jako artefakt infrastruktury badawczej we wczesnej fazie dojrzalosci, skladajacy sie z trzech historycznie powiazanych, lecz epistemologicznie odrebnych domen. Poniższa ocena koncentruje sie wylacznie na architekturze, zarzadzaniu, dyscyplinie provenance i dlugoterminowej witalnosci projektu. <strong>Nie ocenia zdrowia fizyki LSC ani nie traktuje zbieznosci modeli AI jako dowodu prawdziwosci.</strong></p>
+
+<h2 id="sec1-1">1.1. Rzeczywista innowacja versus inflacja terminologiczna</h2>
+
+<p>Material wykazuje kilka decyzji projektowych, ktore nalezy uznac za <strong>autentycznie nowatorskie</strong> w kontekscie infrastruktury badawczej wspomaganej przez AI:</p>
+
+<div class="callout callout-positive">
+<div class="callout-title">Separacja fizyczna domen (Domain Separation)</div>
+<p>Fizyczne rozdzielenie LSC-Research, MHLM_MDLH i AOIA-Core to najbardziej konsekwentna decyzja strukturalna w calym projekcie. Mieszanie autorytetu naukowego z ramowka bezpieczenstwa AI i zarzadzaniem infrastruktura w jednym repozytorium to klasyczny wzorzec generowania artefaktow zanieczyszczajacych wszystkie trzy domeny jednoczesnie. Separacja fizyczna wymusza jawne przekroczenia granic, ktore mozna zarzadzac, audytowac i -- co kluczowe -- odrzucac. Decyzja ta powinna byc traktowana jako <strong>trwala</strong>, a nie faza przejsciowa.</p>
+</div>
+
+<div class="callout callout-positive">
+<div class="callout-title">Warstwa audytu MHLM/MDLH</div>
+<p>Swiadome stworzenie ram audytu epistemologicznego (MHLM/MDLH) wspoldzialajacych z linia teoretyczna (LSC), ale pozostajacych od niej oddzielonych, to postawa odpowiedzialna naukowo. Archiwum rejestruje ryzyko, ze wiele modeli jezykowych moze stabilizowac spojna, lecz niezwalidowana teorie naukowa. To nie jest walidacja modelu fizycznego -- to udokumentowanie ryzyka provenance, ewolucji twierdzen i roznic miedzy spojnoscia matematyczna a dowodem empirycznym.</p>
+</div>
+
+<p>Warto odnotowac, ze terminologia stosowana w projekcie ("epistemic runtime", "contradiction registry", "bounded execution") jest w wiekszosci funkcjonalna, a nie czysto dekoracyjna. Nie zidentyfikowano istotnych symptomow inflacji terminologicznej -- terminy odnosza sie do konkretnych artefaktow lub procesow identyfikowalnych w strukturze repozytorium.</p>
+
+<h2 id="sec1-2">1.2. Odpowiedzialnosc naukowa i bezpieczenstwo AI</h2>
+
+<p>Projekt wykazuje kilka cech swiadczacych o odpowiedzialnym podejsciu do badan wspomaganych przez AI:</p>
+
+<table>
+<caption data-label="Tabela 1">Mocne strony w zakresie odpowiedzialnosci naukowej</caption>
+<thead>
+<tr><th>Obszar</th><th>Decyzja/Observacja</th><th>Ocena</th></tr>
+</thead>
+<tbody>
+<tr>
+<td>Status naukowy</td>
+<td>LSC jest jawnie oznaczone jako "niezwalidowany fenomenologiczny framework"</td>
+<td>Pozytywna -- brak przesadywania</td>
+</tr>
+<tr>
+<td>Reprodukowalnosc</td>
+<td>Posiadane sa jawne etykiety wersji, metadane DOI, instrukcje build</td>
+<td>Pozytywna -- podstawowa infrastruktura obecna</td>
+</tr>
+<tr>
+<td>Provenance</td>
+<td>Kazdy artefakt ma przypisany model zrodlowy (GPT, Claude, Gemini, DeepSeek, Kimi, Codex)</td>
+<td>Pozytywna -- sladowalnosc zachowana</td>
+</tr>
+<tr>
+<td>Separacja autorytetow</td>
+<td>Autorytet naukowy (LSC) i zarzadzanie AI (AOIA) sa fizycznie odseparowane</td>
+<td>Pozytywna -- zapobiega zanieczyszczeniu</td>
+</tr>
+<tr>
+<td>Granica odzysku</td>
+<td>Dupilikaty (6929) usuniete, istniejace indeksy duplikatow wykorzystane ponownie</td>
+<td>Pozytywna -- kontrola wzrostu rekurencyjnego</td>
+</tr>
+</tbody>
+</table>
+
+<p>W szczegolnosci, wyrazne oznaczenie <strong>calosci linii LSC jako niezwalidowanej</strong> to decyzja o znaczeniu etycznym i naukowym, ktora izoluje projekt od wielu najgorszych pulapek, w jakie wpada wczesna faza badan spekulatywnych.</p>
+
+<h2 id="sec1-3">1.3. Architektura provenance i dlugoterminowa wartosc</h2>
+
+<p>Archiwum MHLM zawiera szczegolowy system klasyfikacji autorstwa i zrodla kazdego artefaktu. Dystrybucja modeli jest jawna:</p>
+
+<table>
+<caption data-label="Tabela 2">Dystrybucja modeli w archiwum (pliki kanoniczne)</caption>
+<thead>
+<tr><th>Model</th><th>Liczba plikow</th><th>Udzial procentowy</th></tr>
+</thead>
+<tbody>
+<tr><td>Gemini</td><td>215</td><td>24,6%</td></tr>
+<tr><td>Codex</td><td>73</td><td>8,4%</td></tr>
+<tr><td>DeepSeek</td><td>54</td><td>6,2%</td></tr>
+<tr><td>GPT</td><td>51</td><td>5,8%</td></tr>
+<tr><td>Kimi</td><td>40</td><td>4,6%</td></tr>
+<tr><td>Claude</td><td>7</td><td>0,8%</td></tr>
+<tr><td>Nieokreslony/mieszany</td><td>434</td><td>49,7%</td></tr>
+</tbody>
+</table>
+
+<p>Wskaznik <strong>49,7% plikow o nieokreslonym pochodzeniu modelu</strong> jest zrodlem zmartwienia (patrz Sekcja 2), ale sama swiadomosc dystrybucji i jawne jej udokumentowanie to cecha dojrzalej architektury provenance.</p>
+
+<p><strong>Dlugoterminowa wartosc:</strong> Material ma znaczenie jako <strong>studium przypadku epistemologicznego</strong> dokumentujace, jak rekursywna wspolpraca modeli AI moze tworzyc uzyteczna krytyke jednoczesnie generujac ryzyko provenance. Bez wzgledu na losy fizyki LSC, ten aspekt archiwum zachowuje wartosc dla badan nad bezpieczenstwem AI i epistemologia maszynowa.</p>
+
+</div>
+
+<!-- ==================== SEKCJA 2 ==================== -->
+<div class="section" id="sec2">
+<h1>Sekcja 2. Krytyczne slabosci</h1>
+
+<p>Pomimo autentycznych mocnych stron, archiwum ujawnia szereg powaznych slabosci architektonicznych, ryzyk operacyjnych i zagrozen epistemologicznych, ktore wymagaja natychmiastowej uwagi.</p>
+
+<h2 id="sec2-1">2.1. Ukryta kruchosci architektoniczna</h2>
+
+<h3>2.1.1. Dominacja artefaktow o nieokreslonym pochodzeniu</h3>
+
+<p>Prawie polowa (49,7%) plikow kanonicznych ma status "mixed/unknown" pod wzgledem modelu zrodlowego. W kontekscie audytu provenance to <strong>krytyczna luka</strong>. Provenance to nie tylko metadane -- to zdolnosc do sladowania pochodzenia kazdego twierdzenia do jego pierwotnego zrodla. Gdy blisko polowa archiwum pozbawiona jest tego atrybutu, cala warstwa audytu traci wiarygodnosc.</p>
+
+<div class="callout">
+<div class="callout-title">Ryzyko krytyczne: Znieksztalcenie provenance</div>
+<p>Wskaznik 49,7% plikow "mixed/unknown" oznacza, ze w polowie przypadkow nie mozna okreslic, ktory model AI (lub model ludzki) wygenerowal dany artefakt. To nie jest problem kosmetyczny -- to podwazenie fundamentalnej obietnicy archiwum MHLM/MDLH.</p>
+</div>
+
+<h3>2.1.2. Skalowalnosc archiwum i wzrost rekurencyjny</h3>
+
+<p>Archiwum zawiera 874 pliki kanoniczne powstale z przeskanowania 13 535 jednostek. Stosunek 6,5% kanonicznych do przeskanowanych wskazuje na agresywna deduplikacje, ale rowniez na ryzyko: <strong>przyrost rekurencyjny</strong> -- kazdy kolejny eksport moze generowac nowe duplikaty, nowe indeksy i nowe metadane. Granica odzysku ("recovery boundary") zostala narzucona, ale brakuje automatycznego mechanizmu zapobiegajacego przyszlemu wzrostowi rekurencyjnemu.</p>
+
+<h3>2.1.3. Struktura repozytorium i dluhy techniczne</h3>
+
+<p>Raport forensic wykazuje, ze skanowane repozytoria nie maja czystych granic -- to "wykres genealogiczny z trzema aktywnymi domenami epistemologicznymi". Wiele korzeni repozytorium ma klasyfikacje "Shared/uncertain" lub "Mixed authority". To znaczy, ze nawet po separacji fizycznej, <strong>zanieczyszczenie historyczne pozostaje w korzeniach</strong>.</p>
+
+<h2 id="sec2-2">2.2. Ryzyka zanieczyszczenia provenance i niestabilnosc epistemologiczna</h2>
+
+<h3>2.2.1. Zbieznosc modeli jako pulapka epistemologiczna</h3>
+
+<p>Archiwum jawnie przyznaje, ze "wielomodelowa zbieznosc NIE jest dowodem prawdy". To postawa korzystna, ale sama obecnosc 874 plikow kanonicznych pochodzacych z interakcji 6+ modeli AI stwarza <strong>efekt samoutwierdzajacej sie kognicji</strong>. Gdy modele generuja krytyke, inne modele na nia odpowiadaja, a calosc jest archiwizowana jako "audyt", granica miedzy dokumentowaniem ryzyka a jego reprodukcja staje sie rozmyta.</p>
+
+<h3>2.2.2. Ryzyko pseudo-rygoru</h3>
+
+<p>Material zawiera skomplikowane formalizmy matematyczne (rownania Lagrangianu, tensory D_mu_nu, rownania Lindblada), ktore wygladaja na profesjonalne wyprowadzenia fizyki teoretycznej. Jednak kontekst ich powstania -- wygenerowane przez modele AI (OpenAI o1, GPT-4) przy wsparciu uzytkownika -- oznacza, ze <strong>spojnosc matematyczna nie jest gwarancja fizycznej poprawnosci</strong>. To ryzyko jest czesciowo skompensowane przez jawnie deklarowany status "niezwalidowany", ale obecnosc tych formalizmow w archiwum moze byc wykorzystywana jako sygnal rzekomej powagi naukowej.</p>
+
+<h3>2.2.3. Niezrozumienie roli korekcji formalnej LSC 6.2.2</h3>
+
+<p>Material wspomina o "LSC 6.2.2 (formal correction layer)" bez jasnego wyjasnienia, czego ta korekcja dotyczy, kto ja przeprowadzil i jakie byly jej kryteria sukcesu. W kontekscie badan spekulatywnych kazda "korekcja formalna" bez transparentnej metodologii to potencjalne zrodlo dodatkowego zanieczyszczenia epistemologicznego.</p>
+
+<h2 id="sec2-3">2.3. Pulapki zlozonosci i niebezpieczenstwa kognicji rekursywnej</h2>
+
+<h3>2.3.1. Architektura AOIA: ambicja versus wykonalnosc</h3>
+
+<p>AOIA ("deterministic local-first epistemic runtime architecture") to najambitniejszy komponent, ale rowniez najslabiej uzasadniony. Material opisuje system zawierajacy: deterministic routing, provenance-aware retrieval, contradiction registry, bounded execution i operator-controlled cognition. Brakuje jednak:</p>
+<ul>
+<li>Dzialajacej implementacji referencyjnej (poza szkieletem kodu)</li>
+<li>Benchmarkow wydajnosciowych lub niezawodnosciowych</li>
+<li>Przypadkow uzycia (use cases) spoza wlasnego ekosystemu LSC/MHLM</li>
+<li>Evaluacji niezaleznej od tworcow systemu</li>
+</ul>
+
+<h3>2.3.2. Niebezpieczenstwo rekursywnej autorefleksji</h3>
+
+<p>Projekt zawiera warstwe audytu (MHLM/MDLH) audytujaca wlasna produkcje AI, ktora jest jednoczesnie wykorzystywana do rozwijania teorii fizycznej (LSC), ktora z kolei jest audytowana... Ta petla rekurencyjna, chociaz jawnie rozpoznana, nie ma zadnej <strong>zewnetrznej bramy</strong> (external gate) -- brakuje niezaleznego, zewnetrznego audytora lub evaluatora, ktory moglby przerwac te petle.</p>
+
+<h3>2.3.3. Zagrozenie operacyjne: zaleznosc od pojedynczego operatora</h3>
+
+<p>Z wielu fragmentow materialu wynika, ze caly ekosystem jest prowadzony i kuratowany przez jednego operatora ("l" -- domyslnie uzytkownik "l" na lokalnej maszynie). Sciezki takie jak <code>/home/l/Desktop/...</code>, <code>/home/l/github-audit/...</code> i <code>/home/l/neutrino-oscillations-pbh/...</code> wskazuja na <strong>koncentracje wiedzy i kontroli w jednym podmiocie</strong>. To klasyczny czynnik ryzyka bus-factor = 1. Utrata lub niedostepnosc tego operatora grozi calkowitym rozmontowaniem ciaglosci projektu.</p>
+
+<table>
+<caption data-label="Tabela 3">Podsumowanie krytycznych slabosci i ich wplywu</caption>
+<thead>
+<tr><th>Slabosc</th><th>Wplyw</th><th>Prawdopodobienstwo kolapsu</th></tr>
+</thead>
+<tbody>
+<tr><td>49,7% plikow bez przypisanego modelu</td><td>Zalamanie sie warstwy audytu provenance</td><td>Wysokie</td></tr>
+<tr><td>Mieszane korzenie repozytorium (D/Shared)</td><td>Zanieczyszczenie historyczne trwa</td><td>Wysokie</td></tr>
+<tr><td>Brak zewnetrznej bramy audytowej</td><td>Rekurencyjna autoweryfikacja</td><td>Srednie</td></tr>
+<tr><td>Bus-factor = 1</td><td>Calkowity kolaps przy utracie operatora</td><td>Wysokie</td></tr>
+<tr><td>AOIA bez benchmarkow</td><td>Brak mozliwosci oceny postepu</td><td>Srednie</td></tr>
+<tr><td>Brak implementacji referencyjnej AOIA</td><td>Architektura pozostaje spekulatywna</td><td>Wysokie</td></tr>
+</tbody>
+</table>
+
+</div>
+</body>
+</html>
+
+<!-- ==================== SEKCJA 3 ==================== -->
+<div class="section" id="sec3">
+<h1>Sekcja 3. Analiza gotowosci grantowej</h1>
+
+<p>W tej sekcji oceniamy, czy projekt MHLM/MDLH/AOIA moze realistycznie ewoluowac w kierunku wiarygodnej inicjatywy infrastrukturalnej AI safety, frameworku audytu epistemologicznego, reprodukowalnego systemu naukowego lub platformy zarzadzania obliczeniowego.</p>
+
+<h2 id="sec3-1">3.1. Potencjalne zrodla zainteresowania instytucjonalnego</h2>
+
+<p>Projekt ma trzy obszary, ktore moga budzic zainteresowanie instytucjonalne:</p>
+
+<p><strong>(A) Studium przypadku kognicji maszynowej w nauce.</strong> Bez wzgledu na walidacje fizyki LSC, archiwum dokumentuje rzadki przypadek: wielomodelowa, rekursywna kolaboracja AI przy tworzeniu struktury teoretycznej z pelnym audytem provenance. Dla badaczy AI safety i epistemologii maszynowej ten material ma wartosc jako zrodlo empiryczne.</p>
+
+<p><strong>(B) Framework audytu halucynacji i zbieznosci.</strong> Warstwa MHLM/MDLH, mimo niedojrzalosci, zawiera elementy autentycznie przydatne: klasyfikacje artefaktow, wykrywanie duplikatow, sladowanie modelu zrodlowego. Te komponenty moga byc abstrahowane od kontekstu neutrinowego i zastosowane do innych dziedzin.</p>
+
+<p><strong>(C) Architektura "bounded execution".</strong> Idee AOIA -- deterministiczne routing, ograniczone wykonywanie, operator-controlled cognition -- to odpowiedzi na realne problemy bezpieczenstwa AI. Nawet jesli obecna implementacja jest fragmentaryczna, sama architektura moze byc punktem wyjscia dla grantu badawczego.</p>
+
+<h2 id="sec3-2">3.2. Obecne bariery institutionalnej adopcji</h2>
+
+<p>Pomimo potencjalu, projekt napotyka na szereg powaznych barrier, ktore w obecnej formie uniemozliwiaja powazna adopcje instytucjonalna:</p>
+
+<table>
+<caption data-label="Tabela 4">Bariery adopcji instytucjonalnej</caption>
+<thead>
+<tr><th>Bariera</th><th>Opis</th><th>Powaga</th></tr>
+</thead>
+<tbody>
+<tr><td>Brak publikacji recenzowanych</td><td>Brak artykulow w czasopismach peer-reviewed dokumentujacych ani fizyke LSC, ani architekture MHLM/AOIA</td><td>Krytyczna</td></tr>
+<tr><td>Brak afiliacji instytucjonalnej</td><td>Projekt wydaje sie byc prowadzony przez pojedynczego operatora bez wsparcia instytucji naukowej</td><td>Krytyczna</td></tr>
+<tr><td>Brak benchmarkow</td><td>AOIA nie ma zadnych mierzalnych benchmarkow wydajnosci, niezawodnosci czy bezpieczenstwa</td><td>Krytyczna</td></tr>
+<tr><td>Brak zespolu</td><td>Brak dowodow na obecnosc zespolu -- wszystkie sciezki wskazuja na jednego operatora</td><td>Poważna</td></tr>
+<tr><td>Brak metodologii walidacji</td><td>Brak jawnej metodologii walidacji dla LSC, MHLM ani AOIA</td><td>Poważna</td></tr>
+<tr><td>Niestandardowa terminologia</td><td>Wiele terminow (MHLM, MDLH, AOIA, LSC) jest specyficznych dla projektu i wymaga tlumaczenia</td><td>Umiarkowana</td></tr>
+<tr><td>Dlaczego teraz?</td><td>Brak wyraznego uzasadnienia pilnosci -- dlaczego to zagadnienie wymaga finansowania wlasnie teraz?</td><td>Umiarkowana</td></tr>
+</tbody>
+</table>
+
+<h2 id="sec3-3">3.3. Warunki niezbedne w horyzoncie 6-12 miesiecy</h2>
+
+<p>Aby projekt stal sie "grant-credible" (warty powaznego rozwazenia przez agencje finansujace), w ciagu 6-12 miesiecy musi pojawic sie:</p>
+
+<p><strong>Warunek 1: Publikacja metodologiczna.</strong> Co najmniej jedna publikacja recenzowana (lub wysokiej jakosci preprint z otwarta recenzja) opisujaca framework MHLM/MDLH jako metodologie audytu AI-assisted research. Nie chodzi o walidacje fizyki LSC -- chodzi o udokumentowanie metody audytu.</p>
+
+<p><strong>Warunek 2: Dzialajacy prototyp AOIA.</strong> Implementacja, ktora mozna zainstalowac i uruchomic, zawierajaca co najmniej: (a) deterministiczny router, (b) rejestr sprzecznosci, (c) sladowanie provenance. Musi byc opublikowany z instrukcja instalacji i testami.</p>
+
+<p><strong>Warunek 3: Benchmark i ewaluacja.</strong> Zestaw benchmarkow (nawet prostych) pozwalajacych zmierzyc, czy AOIA spelnia swoje obietnice: ile sprzecznosci wykrywa? Jakie jest opoznienie routingowe? Jak skalowalny jest rejestr?</p>
+
+<p><strong>Warunek 4: Zespol lub wspolpraca.</strong> Dowod, ze projekt ma wiecej niz jednego uczestnika -- wspolautor publikacji, wspolpracownik, mentor, lub afiliacja instytucjonalna.</p>
+
+<p><strong>Warunek 5: Separacja narracji.</strong> Jasne rozdzielenie trzech opowiesci: (a) "Oto nasza metoda audytu AI-assisted research" -- to jest grantowalne. (b) "Oto nasz framework fizyczny" -- to wymaga walidacji i JEST oznaczony jako niezwalidowany. (c) "Oto nasze narzedzie runtime'owe" -- to wymaga implementacji. Mieszanie tych trzech narracji uniemozliwia ocene przez komisje grantowa.</p>
+
+</div>
+
+<!-- ==================== SEKCJA 4 ==================== -->
+<div class="section" id="sec4">
+<h1>Sekcja 4. Mapa drogowa profesjonalizacji</h1>
+
+<p>Ponizsza mapa drogowa jest zaprojektowana jako realistyczny plan przeksztalcenia projektu w infrastrukture badawcza klasy profesjonalnej. Nie zawiera zalozen fantastycznych o skalowaniu.</p>
+
+<h2>Faza 1: Stabilizacja (miesiace 1-3)</h2>
+
+<p><strong>Cel:</strong> Uporzadkowanie tego, co istnieje, bez dodawania nowych funkcji.</p>
+
+<table>
+<caption data-label="Tabela 5">Faza 1: Stabilizacja</caption>
+<thead>
+<tr><th>Zadanie</th><th>Dzialanie</th><th>Mierzalny rezultat</th></tr>
+</thead>
+<tbody>
+<tr>
+<td>Audyt provenance</td>
+<td>Zidentyfikowac pochodzenie kazdego z 434 plikow "mixed/unknown" -- albo przypisac model, albo oznaczyc jako "unattributable" z uzasadnieniem</td>
+<td>Wskaznik "unknown" spada ponizej 15%</td>
+</tr>
+<tr>
+<td>Dokumentacja architektury</td>
+<td>Napisac Architecture Decision Record (ADR) opisujacy kazda kluczowa decyzje AOIA -- dlaczego taki routing, dlaczego taki rejestr</td>
+<td>Kompletny zestaw ADR (min. 10 dokumentow)</td>
+</tr>
+<tr>
+<td>Testy determinizmu</td>
+<td>Dla kazdego komponentu AOIA: zdefiniowac test weryfikujacy determinizm (ten sam input = ten sam output)</td>
+<td>100% komponentow pokrytych testem determinizmu</td>
+</tr>
+<tr>
+<td>Usuniecie zanieczyszczen</td>
+<td>Wyczyscic korzenie "Shared/uncertain" -- albo przypisac do jednej domeny, albo przeniesc do archiwum</td>
+<td>Zero plikow z klasyfikacja "Mixed authority" w glownych galeziach</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Faza 2: Weryfikacja (miesiace 3-6)</h2>
+
+<p><strong>Cel:</strong> Udowodnic, ze architektura dziala zgodnie z obietnicami.</p>
+
+<table>
+<caption data-label="Tabela 6">Faza 2: Weryfikacja</caption>
+<thead>
+<tr><th>Zadanie</th><th>Dzialanie</th><th>Mierzalny rezultat</th></tr>
+</thead>
+<tbody>
+<tr>
+<td>Prototyp AOIA</td>
+<td>Dzialajaca implementacja: router, rejestr sprzecznosci, provenance logger, operator gate</td>
+<td>Instalowalny pakiet z dokumentacja</td>
+</tr>
+<tr>
+<td>Benchmark LSC</td>
+<td>Wygenerowanie falsyfikowalnego zestawu predykcji LSC z niepewnosciami, ktore mozna porownac z danymi istniejacymi</td>
+<td>Arkusz predykcji z przedzialami niepewnosci</td>
+</tr>
+<tr>
+<td>Publikacja metodologiczna</td>
+<td>Preprint lub artykul opisujacy framework MHLM jako metodologie audytu</td>
+<td>Dokument opublikowany w repozytorium preprintowym</td>
+</tr>
+<tr>
+<td>Ewaluacja zewnetrzna</td>
+<td>Poprosic co najmniej jednego niezaleznego recenzenta o ocene architektury AOIA lub frameworku MHLM</td>
+<td>Raport recenzenta z zaleceniami</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Faza 3: Izolacja grantowa (miesiace 6-9)</h2>
+
+<p><strong>Cel:</strong> Przygotowac jedna, czysta narracje grantowa.</p>
+
+<table>
+<caption data-label="Tabela 7">Faza 3: Izolacja grantowa</caption>
+<thead>
+<tr><th>Zadanie</th><th>Dzialanie</th><th>Mierzalny rezultat</th></tr>
+</thead>
+<tbody>
+<tr>
+<td>Wybor sciezki grantowej</td>
+<td>Okreslic JEDNA sciezke: albo AI safety audit, albo open-science reproducibility, albo computational governance</td>
+<td>Jedna strona A4 uzasadniajaca wybor</td>
+</tr>
+<tr>
+<td>Abstrakcja od LSC</td>
+<td>Przedstawic MHLM jako framework niezalezny od LSC -- LSC to przypadek uzycia, nie fundament</td>
+<td>Nowa dokumentacja MHLM bez zaleznosci od LSC</td>
+</tr>
+<tr>
+<td>Przypadki uzycia</td>
+<td>Zidentyfikowac 2-3 przypadki uzycia AOIA/MHLM poza wlasnym ekosystemem</td>
+<td>Dokument z opisem przypadkow uzycia</td>
+</tr>
+<tr>
+<td>Budzet i harmonogram</td>
+<td>Przygotowac realistyczny budzet i harmonogram na 12-24 miesiace</td>
+<td>Tabela MS Excel lub podobna</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Faza 4: Zgloszenie (miesiace 9-12)</h2>
+
+<p><strong>Cel:</strong> Zlozyc wniosek grantowy.</p>
+
+<table>
+<caption data-label="Tabela 8">Faza 4: Zgloszenie</caption>
+<thead>
+<tr><th>Zadanie</th><th>Dzialanie</th><th>Mierzalny rezultat</th></tr>
+</thead>
+<tbody>
+<tr>
+<td>Wniosek grantowy</td>
+<td>Przygotowac pelny wniosek zgodny z wymogami wybranej agencji (Horizon Europe, NSF, itp.)</td>
+<td>Kompletny wniosek zlozony</td>
+</tr>
+<tr>
+<td>Letter of support</td>
+<td>Zdobyc list poparcia od instytucji akademickiej lub przemyslowej</td>
+<td>Min. 1 list poparcia</td>
+</tr>
+<tr>
+<td>Demo</td>
+<td>Przygotowac 5-minutowe demo AOIA dzialajace na realnym przykladzie</td>
+<td>Nagranie video lub sesja na zywo</td>
+</tr>
+<tr>
+<td>Plan zarzadzania danymi</td>
+<td>DMP (Data Management Plan) zgodny z wymogami open science</td>
+<td>Dokument DMP</td>
+</tr>
+</tbody>
+</table>
+
+<div class="callout callout-positive">
+<div class="callout-title">Kluczowa zasada: Nie dodawaj, stabilizuj</div>
+<p>Najwiekszym bledem, jaki projekt moze popelnic w tym momencie, jest proba rozbudowy architektury AOIA o nowe funkcje. Obecny stan wymaga konsolidacji, nie ekspansji. Kazda nowa funkcja przed ukonczeniem Fazy 1 jest dlugiem technicznym, ktory zmniejsza szanse na grant.</p>
+</div>
+
+</div>
+
+<!-- ==================== SEKCJA 5 ==================== -->
+<div class="section" id="sec5">
+<h1>Sekcja 5. Najwazniejsza decyzja architektoniczna</h1>
+
+<h2>Pytanie: Jaka jest jedna, najwazniejsza decyzja, jaka tworcy projektu musza podjac, jesli chca, aby projekt przetrwal dlugoterminowo?</h2>
+
+<h2>Odpowiedz: Rozdzielenie "fizyki" od "infrastruktury" na poziomie organizacyjnym, nie tylko technicznym.</h2>
+
+<p>Obecnie projekt ma trzy domeny (LSC, MHLM/MDLH, AOIA), ktore sa <strong>fizycznie</strong> odseparowane w repozytoriach, ale pozostaja <strong>organizacyjnie</strong> i <strong>narracyjnie</strong> splecione. Jedna osoba (lub jeden zespol) kontroluje wszystkie trzy. Jedna historia facylituje wszystkie trzy. Jeden grant (w perspektywie) mialby finansowac wszystkie trzy.</p>
+
+<p>To nie jest zrównowazona architektura. To architektura, w ktorej smierc jednej domeny pociaga smierc pozostalych.</p>
+
+<p><strong>Decyzja, ktora musi zostac podjeta:</strong> Uzyc MHLM/MDLH jako <strong>narzedzia audytu niezaleznego od LSC</strong>, a AOIA jako <strong>infrastruktury niezaleznej od MHLM</strong>. Kazda z tych trzech domen musi miec wlasna strategie przetrwania, wlasne zrodla finansowania i wlasna zdolnosc do istnienia, nawet jesli pozostale zawioda.</p>
+
+<div class="summary-box">
+<div class="summary-box-title">Model docelowy: Trzy niezalezne byty</div>
+<ul>
+<li><strong>LSC</strong> -- program badawczy w dziedzinie fizyki, szuka finansowania w grantach fizycznych, jest kontrolowany przez fizykow, ma wlasna strategie przetrwania.</li>
+<li><strong>MHLM/MDLH</strong> -- framework metodologiczny audytu AI-assisted research, szuka finansowania w grantach AI safety i epistemologii, jest kontrolowany przez metodologow, moze audytowac LSC jako jeden z wielu przypadkow uzycia.</li>
+<li><strong>AOIA</strong> -- infrastruktura software'owa do deterministicznego zarzadzania kognicja AI, szuka finansowania w grantach software engineering i AI governance, jest kontrolowana przez inzynierow, moze byc uzywana do obslugi MHLM jako jeden z wielu przypadkow uzycia.</li>
+</ul>
+</div>
+
+<p><strong>Dlaczego to najwazniejsza decyzja:</strong> Poniewaz bez niej, nawet jesli cala pozostala architektura zostanie ulepszona, projekt pozostaje jednym punktem awarii (single point of failure). Komisje grantowe widza to. Recenzenci widza to. I jesli projekt nie dokona tego rozdzielenia sam, zostanie to narzucone z zewnatrz -- prawdopodobnie w formie odrzucenia wniosku.</p>
+
+<p>Separacja fizyczna to byl krok pierwszy. Separacja organizacyjna musi byc krokiem drugim. Bez niego, zadna ilosc audytow, benchmarkow ani publikacji nie uratuje projektu przed centralizacja ryzyka.</p>
+
+</div>
+
+<!-- ==================== SEKCJA 6 ==================== -->
+<div class="section" id="sec6">
+<h1>Sekcja 6. Werdykt koncowy</h1>
+
+<p>Ponizej przedstawiamy oceny w skali 1-10, gdzie 1 to brak dojrzalosci, a 10 to gotowosc do institutionalnej adopcji. Skala jest liniowa i surowa -- srednia ocena 5 oznacza "istnieje, ale wymaga znaczacej pracy".</p>
+
+<div class="score-grid">
+    <div class="score-row">
+        <div class="score-cell">
+            <div class="score-label">Poważność profesjonalna</div>
+            <div class="score-value">5 / 10</div>
+            <div class="score-desc">Projekt wykazuje autentyczna swiadomosc ryzyka i odpowiedzialne podejscie do badan AI-assisted, ale forma prezentacji jest niestandardowa, dokumentacja nierowna, a struktura organizacyjna nieprzejrzysta.</div>
+        </div>
+        <div class="score-cell">
+            <div class="score-label">Ryzyko epistemologiczne</div>
+            <div class="score-value">4 / 10</div>
+            <div class="score-desc">Wysokie ryzyko rekurencyjnej autoweryfikacji i zanieczyszczenia provenance (49,7% plikow nieznanego pochodzenia). Z drugiej strony, swiadomosc tego ryzyka jest wysoka i jawnie udokumentowana, co czesciowo kompensuje.</div>
+        </div>
+    </div>
+    <div class="score-row">
+        <div class="score-cell">
+            <div class="score-label">Dojrzalosc zarzadzania</div>
+            <div class="score-value">4 / 10</div>
+            <div class="score-desc">Separacja domen to decyzja dojrzala, ale bus-factor = 1, brak zespolu, brak instytucjonalnej afiliacji i brak formalnej struktury zarzadzania to powazne braki. Governance istnieje jako idea, nie jako dzialajacy system.</div>
+        </div>
+        <div class="score-cell">
+            <div class="score-label">Dojrzalosc inzynieryjna</div>
+            <div class="score-value">3 / 10</div>
+            <div class="score-desc">AOIA pozostaje w fazie specyfikacji architektonicznej z fragmentaryczna implementacja. Brak testow, benchmarkow i implementacji referencyjnej. To nie jest jeszcze produkt inzynieryjny -- to research artifact.</div>
+        </div>
+    </div>
+</div>
+
+<h2>Prawdopodobienstwo ewolucji w kierunku respektowanego wysilku open-science / AI-governance</h2>
+
+<p>Na podstawie dostarczonego materialu szacujemy to prawdopodobienstwo na <strong>15-25%</strong> w horyzoncie 24 miesiecy, przy zalozeniu, ze tworcy beda postepowac zgodnie z zaleceniami z Sekcji 4 i 5.</p>
+
+<p>Czynniki obnizajace: bus-factor = 1, brak publikacji, brak zespolu, brak instytucji, brak benchmarkow, wysoki odsetek artefaktow o nieokreslonym pochodzeniu, AOIA w fazie spekulacyjnej.</p>
+
+<p>Czynniki podnoszace: autentyczna swiadomosc ryzyka, decyzja o separacji fizycznej, obecnosc warstwy audytu, potencjal jako studium przypadku AI safety, gotowa infrastruktura archiwizacyjna (874 plikow z metadanymi), potencjalna wartosc metodologiczna MHLM niezaleznie od LSC.</p>
+
+<h2>Rekomendacja ostateczna</h2>
+
+<p>Projekt nie jest gotowy do zlozenia wniosku grantowego w obecnej formie. Nie oznacza to, ze jest bezwartosciowy -- oznacza to, ze wymaga 6-12 miesiecy pracy konsolidacyjnej zgodnie z mapa drogowa przedstawiona w Sekcji 4.</p>
+
+<p>Najwazniejsze: <strong>nie dodawac nowych funkcji. Stabilizowac to, co istnieje.</strong> Kazda nowa funkcja przed ukonczeniem Fazy 1 jest dodatkowym dlugiem, ktory zmniejsza prawdopodobienstwo powodzenia.</p>
+
+<p>Jesli tworcy podejma decyzje o organizacyjnej separacji trzech domen (Sekcja 5) i konsekwentnie zrealizuja Fazy 1-2 mapy drogowej, projekt moze ewoluowac w kierunku wiarygodnej inicjatywy badawczej. Bez tych decyzji, ryzyko powolnego rozmontowania lub zapomnienia jest wysokie.</p>
+
+<div class="callout callout-positive">
+<div class="callout-title">Ostatnia uwaga</div>
+<p>Ten raport nie waliduje fizyki LSC. Nie traktuje zbieznosci modeli jako dowodu. Nie jest pochlebny ani krytyczny dla samego w sobie -- jest <strong>forensicznym audytem architektury</strong>. I jako taki, dokumentuje zarowno autentyczne kompetencje, jak i rzeczywiste luki. Obie strony musza byc rozpatrywane razem.</p>
+</div>
+
+</div>
+
+</body>
+</html>
